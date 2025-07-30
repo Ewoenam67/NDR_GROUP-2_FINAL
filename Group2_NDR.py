@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import numpy as np
 import joblib
@@ -18,19 +18,31 @@ imputer = joblib.load("imputer.pkl")
 X_columns = joblib.load("X_columns.pkl")
 
 # ------------------------------------------------
-# SIDEBAR NAVIGATION
+# SIDEBAR NAVIGATION (Light mode fix with custom title)
 # ------------------------------------------------
 with st.sidebar:
+    st.markdown(
+        "<h3 style='margin-bottom: 10px; color: #92400e;'>📑 Navigation</h3>",
+        unsafe_allow_html=True
+    )
+    
     selected = option_menu(
-        menu_title="Navigation",
+        menu_title=None,  # Removes black title bar
         options=["Home", "Predictor", "About"],
         icons=["house", "bar-chart", "info-circle"],
         default_index=1,
         styles={
             "container": {"padding": "0!important", "background-color": "#fef3c7"},
             "icon": {"color": "#92400e", "font-size": "20px"},
-            "nav-link": {"font-size": "16px", "--hover-color": "#fde68a"},
-            "nav-link-selected": {"background-color": "#fcd34d", "color": "#000"},
+            "nav-link": {
+                "font-size": "16px",
+                "color": "#000000",  # Ensures readable text
+                "--hover-color": "#fde68a"
+            },
+            "nav-link-selected": {
+                "background-color": "#fcd34d",
+                "color": "#000000"
+            },
         }
     )
 
@@ -95,8 +107,8 @@ elif selected == "About":
     st.markdown("""
         This app was developed by Group 2 to estimate the number of people affected by natural disasters.
 
-        Model Used: Decision Tree Regressor  
-        Tools: Python, Scikit-learn, Streamlit  
-        Dataset: Natural Disaster Records (1993–2023)  
-        Goal: Provide insights for emergency preparedness and resource planning.
+        *Model Used*: Decision Tree Regressor  
+        *Tools*: Python, Scikit-learn, Streamlit  
+        *Dataset*: Natural Disaster Records (1993–2023)  
+        *Goal*: Provide insights for emergency preparedness and resource planning.
     """)
