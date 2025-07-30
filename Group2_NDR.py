@@ -27,7 +27,7 @@ with st.sidebar:
     )
     
     selected = option_menu(
-        menu_title=None,  # Removes black title bar
+        menu_title=None,
         options=["Home", "Predictor", "About"],
         icons=["house", "bar-chart", "info-circle"],
         default_index=1,
@@ -36,7 +36,7 @@ with st.sidebar:
             "icon": {"color": "#92400e", "font-size": "20px"},
             "nav-link": {
                 "font-size": "16px",
-                "color": "#000000",  # Ensures readable text
+                "color": "#000000",
                 "--hover-color": "#fde68a"
             },
             "nav-link-selected": {
@@ -62,31 +62,44 @@ elif selected == "Predictor":
 
     input_data = {}
 
-    # --- Forcefully add 'Year' field ---
+    # Example mappings (update as per your preprocessing!)
+    disaster_group_options = {"Biological": 0, "Climatological": 1, "Geophysical": 2, "Hydrological": 3, "Meteorological": 4, "Technological": 5}
+    disaster_type_options = {"Flood": 0, "Earthquake": 1, "Storm": 2, "Epidemic": 3}
+    country_options = {"Ghana": 0, "Nigeria": 1, "Kenya": 2, "South Africa": 3}
+    region_options = {"Africa": 0, "Asia": 1, "Europe": 2, "Americas": 3}
+
     if 'Year' in X_columns:
         input_data['Year'] = st.number_input("Year", min_value=1900, max_value=2100, value=2023)
 
     for col in X_columns:
         if col == 'Year':
-            continue  # already added above
+            continue
+        elif col.lower() == 'disaster_group':
+            selection = st.selectbox("Disaster Group", list(disaster_group_options.keys()))
+            input_data[col] = disaster_group_options[selection]
+        elif col.lower() == 'disaster_type':
+            selection = st.selectbox("Disaster Type", list(disaster_type_options.keys()))
+            input_data[col] = disaster_type_options[selection]
+        elif col.lower() == 'country':
+            selection = st.selectbox("Country", list(country_options.keys()))
+            input_data[col] = country_options[selection]
+        elif col.lower() == 'region':
+            selection = st.selectbox("Region", list(region_options.keys()))
+            input_data[col] = region_options[selection]
         elif col.lower() in ['total_deaths', 'number_injured', 'number_affected', 'number_homeless']:
             input_data[col] = st.number_input(col.replace("_", " ").title(), min_value=0.0, value=100.0)
-        elif col.lower() in ['country', 'region', 'disaster_group', 'disaster_type']:
-            input_data[col] = st.number_input(f"Encoded: {col.replace('_', ' ').title()}", min_value=0, step=1)
         else:
             input_data[col] = st.number_input(f"{col.replace('_', ' ').title()}", value=0.0)
 
     # Convert to DataFrame and align with training structure
     input_df = pd.DataFrame([input_data])
 
-    # Ensure all required columns are present and in correct order
     for col in X_columns:
         if col not in input_df.columns:
-            input_df[col] = 0  # Fill any missed column
+            input_df[col] = 0
     input_df = input_df[X_columns]
 
     try:
-        # Impute & Scale
         input_imputed = imputer.transform(input_df)
         input_scaled = scaler.transform(input_imputed)
 
