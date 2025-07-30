@@ -7,13 +7,14 @@ from streamlit_option_menu import option_menu
 # ------------------------------------------------
 # PAGE CONFIGURATION
 # ------------------------------------------------
-st.set_page_config(page_title="Loan Amount Predictor - Group 2", layout="wide")
+st.set_page_config(page_title="Disaster Impact Predictor - Group 2", layout="wide")
 
 # ------------------------------------------------
 # LOAD TRAINED ARTIFACTS
 # ------------------------------------------------
 model = joblib.load("decision_tree_model.pkl")
 scaler = joblib.load("scaler.pkl")
+imputer = joblib.load("imputer.pkl")
 X_columns = joblib.load("X_columns.pkl")
 
 # ------------------------------------------------
@@ -23,11 +24,11 @@ with st.sidebar:
     selected = option_menu(
         menu_title="Navigation",
         options=["Home", "Predictor", "About"],
-        icons=["house", "calculator", "info-circle"],
+        icons=["house", "bar-chart", "info-circle"],
         default_index=1,
         styles={
-            "container": {"padding": "0!important", "background-color": "#fff6e5"},
-            "icon": {"color": "#d97706", "font-size": "20px"},
+            "container": {"padding": "0!important", "background-color": "#fef3c7"},
+            "icon": {"color": "#92400e", "font-size": "20px"},
             "nav-link": {"font-size": "16px", "--hover-color": "#fde68a"},
             "nav-link-selected": {"background-color": "#fcd34d", "color": "#000"},
         }
@@ -37,44 +38,54 @@ with st.sidebar:
 # HOME TAB
 # ------------------------------------------------
 if selected == "Home":
-    st.title("🏠 Welcome to the Loan Amount Predictor - Group 2")
-    st.write("This tool predicts the expected loan amount a customer may receive based on their details.")
+    st.title("🏠 Welcome to the Disaster Impact Predictor - Group 2")
+    st.write("This tool predicts the number of people potentially affected by a natural disaster using historical patterns.")
 
 # ------------------------------------------------
 # PREDICTOR TAB
 # ------------------------------------------------
 elif selected == "Predictor":
-    st.title("📊 Predict Loan Amount")
-    st.write("Enter the customer's details below to estimate their eligible loan amount.")
+    st.title("📊 Disaster Impact Prediction")
+    st.write("Provide the disaster and location details to estimate the number of people affected.")
 
     input_data = {}
 
-    # Collect inputs with proper widgets
+    # --- Forcefully add 'Year' field ---
+    if 'Year' in X_columns:
+        input_data['Year'] = st.number_input("Year", min_value=1900, max_value=2100, value=2023)
+
     for col in X_columns:
-        if col == 'age':
-            input_data[col] = st.number_input("Age", min_value=0, value=30)
-        elif col == 'income':
-            input_data[col] = st.number_input("Income (GHS)", min_value=0.0, value=1000.0)
-        elif col == 'credit_score':
-            input_data[col] = st.number_input("Credit Score", min_value=0.0, value=600.0)
-        elif col == 'loan_term':
-            input_data[col] = st.number_input("Loan Term (Months)", min_value=1.0, value=12.0)
-        elif col == 'gender':
-            gender = st.selectbox("Gender", ['Male', 'Female'])
-            input_data[col] = 1 if gender == 'Male' else 0
-        elif col == 'employment_type':
-            emp_type = st.selectbox("Employment Type", ['Salaried', 'Self-employed', 'Unemployed'])
-            emp_map = {'Salaried': 0, 'Self-employed': 1, 'Unemployed': 2}
-            input_data[col] = emp_map[emp_type]
+        if col == 'Year':
+            continue  # already added above
+        elif col.lower() in ['total_deaths', 'number_injured', 'number_affected', 'number_homeless']:
+            input_data[col] = st.number_input(col.replace("_", " ").title(), min_value=0.0, value=100.0)
+        elif col.lower() in ['country', 'region', 'disaster_group', 'disaster_type']:
+            input_data[col] = st.number_input(f"Encoded: {col.replace('_', ' ').title()}", min_value=0, step=1)
+        else:
+            input_data[col] = st.number_input(f"{col.replace('_', ' ').title()}", value=0.0)
 
-    # Convert to DataFrame and scale
+    # Convert to DataFrame and align with training structure
     input_df = pd.DataFrame([input_data])
-    input_scaled = scaler.transform(input_df)
 
-    # Predict
-    if st.button("Predict Loan Amount"):
-        prediction = model.predict(input_scaled)[0]
-        st.success(f"💰 Predicted Loan Amount: GHS {prediction:,.2f}")
+    # Ensure all required columns are present and in correct order
+    for col in X_columns:
+        if col not in input_df.columns:
+            input_df[col] = 0  # Fill any missed column
+    input_df = input_df[X_columns]
+
+    try:
+        # Impute & Scale
+        input_imputed = imputer.transform(input_df)
+        input_scaled = scaler.transform(input_imputed)
+
+        if st.button("Predict Affected People"):
+            prediction = model.predict(input_scaled)[0]
+            st.success(f"📌 Estimated Number of People Affected: {prediction:,.0f}")
+    except Exception as e:
+        st.error("🚫 Prediction Failed.")
+        st.code(str(e))
+        st.write("Expected columns:", X_columns)
+        st.write("Current input shape:", input_df.shape)
 
 # ------------------------------------------------
 # ABOUT TAB
@@ -82,10 +93,10 @@ elif selected == "Predictor":
 elif selected == "About":
     st.title("ℹ About This App")
     st.markdown("""
-        This app was developed by Group 2 to predict the loan amount a customer might receive,
-        using a Decision Tree Regressor trained on key customer data.
+        This app was developed by Group 2 to estimate the number of people affected by natural disasters.
 
-        Tools Used: Python, Streamlit, Scikit-learn  
-        Target Variable: Loan Amount  
-        Purpose: Estimate realistic loan allocations for Xente customers.
+        Model Used: Decision Tree Regressor  
+        Tools: Python, Scikit-learn, Streamlit  
+        Dataset: Natural Disaster Records (1993–2023)  
+        Goal: Provide insights for emergency preparedness and resource planning.
     """)
