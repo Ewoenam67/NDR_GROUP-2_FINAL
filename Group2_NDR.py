@@ -66,7 +66,7 @@ elif selected == "Predictor":
     disaster_group_options = {"Biological": 0, "Climatological": 1, "Geophysical": 2, "Hydrological": 3, "Meteorological": 4, "Technological": 5}
     disaster_type_options = {"Flood": 0, "Earthquake": 1, "Storm": 2, "Epidemic": 3}
     country_options = {"Ghana": 0, "Nigeria": 1, "Kenya": 2, "South Africa": 3}
-    region_options = {"Africa": 0, "Asia": 1, "Europe": 2, "Americas": 3}
+    region_options = {"Middle Africa": 0, "Eastern Africa": 1, "Western Africa": 2, "Cental Africa": 3, "Southern Africa": 4}
 
     if 'Year' in X_columns:
         input_data['Year'] = st.number_input("Year", min_value=1900, max_value=2100, value=2023)
