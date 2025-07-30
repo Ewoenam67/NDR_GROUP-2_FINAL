@@ -47,31 +47,31 @@ elif selected == "Predictor":
     st.title("📊 Predict Loan Amount")
     st.write("Enter the customer's details below to estimate their eligible loan amount.")
 
-    # Input fields based on training columns
     input_data = {}
+
+    # Collect inputs with proper widgets
     for col in X_columns:
-        if col.lower() in ['age', 'income', 'credit_score', 'loan_term']:
-            input_data[col] = st.number_input(col.replace("_", " ").title(), min_value=0.0, value=50.0)
-        elif col.lower() == 'gender':
-            input_data[col] = st.selectbox("Gender", ['Male', 'Female'])
-        elif col.lower() == 'employment_type':
-            input_data[col] = st.selectbox("Employment Type", ['Salaried', 'Self-employed', 'Unemployed'])
-        else:
-            input_data[col] = st.text_input(f"{col.replace('_', ' ').title()}")
+        if col == 'age':
+            input_data[col] = st.number_input("Age", min_value=0, value=30)
+        elif col == 'income':
+            input_data[col] = st.number_input("Income (GHS)", min_value=0.0, value=1000.0)
+        elif col == 'credit_score':
+            input_data[col] = st.number_input("Credit Score", min_value=0.0, value=600.0)
+        elif col == 'loan_term':
+            input_data[col] = st.number_input("Loan Term (Months)", min_value=1.0, value=12.0)
+        elif col == 'gender':
+            gender = st.selectbox("Gender", ['Male', 'Female'])
+            input_data[col] = 1 if gender == 'Male' else 0
+        elif col == 'employment_type':
+            emp_type = st.selectbox("Employment Type", ['Salaried', 'Self-employed', 'Unemployed'])
+            emp_map = {'Salaried': 0, 'Self-employed': 1, 'Unemployed': 2}
+            input_data[col] = emp_map[emp_type]
 
-    # Manual encoding for categorical values
-    encoding_map = {
-        'Gender': {'Male': 1, 'Female': 0},
-        'Employment_Type': {'Salaried': 0, 'Self-employed': 1, 'Unemployed': 2},
-    }
-
-    for col, mapping in encoding_map.items():
-        if col in input_data:
-            input_data[col] = mapping[input_data[col]]
-
+    # Convert to DataFrame and scale
     input_df = pd.DataFrame([input_data])
     input_scaled = scaler.transform(input_df)
 
+    # Predict
     if st.button("Predict Loan Amount"):
         prediction = model.predict(input_scaled)[0]
         st.success(f"💰 Predicted Loan Amount: GHS {prediction:,.2f}")
@@ -82,10 +82,10 @@ elif selected == "Predictor":
 elif selected == "About":
     st.title("ℹ About This App")
     st.markdown("""
-        This app was developed by *Group 2* to predict the loan amount a customer might receive,
-        using a *Decision Tree Regressor* trained on key customer data.
+        This app was developed by Group 2 to predict the loan amount a customer might receive,
+        using a Decision Tree Regressor trained on key customer data.
 
-        *Tools Used:* Python, Streamlit, Scikit-learn  
-        *Target Variable:* Loan Amount  
-        *Purpose:* Estimate realistic loan allocations for Xente customers
+        Tools Used: Python, Streamlit, Scikit-learn  
+        Target Variable: Loan Amount  
+        Purpose: Estimate realistic loan allocations for Xente customers.
     """)
